@@ -1,12 +1,15 @@
 const weatherApi = "6293bcf1e16f4a9aff35282648cbef09";
 const locationElement = document.getElementById("location");
 const tempElement = document.getElementById("today-temp");
+const condElement = document.getElementById("today-cond");
+const aqiElement = document.getElementById("aqi");
+const iconElement = document.getElementById("weather-icon");
 async function getWeatherData(locationQuery) {
   locationElement.textContent = `Fetching Weather...`;
   tempElement.textContent = `---`;
-  document.getElementById("today-cond").textContent = `Loading...`;
-  document.getElementById("aqi").textContent = `Loading AQI...`;
-  document.getElementById("weather-icon").style.display = "none";
+  condElement.textContent = `Loading...`;
+  aqiElement.textContent = `Loading AQI...`;
+  iconElement.style.display = "none";
   try {
     const weatherData = await fetch(
       `https://api.openweathermap.org/data/2.5/weather?${locationQuery}&appid=${weatherApi}&units=metric`,
@@ -15,19 +18,17 @@ async function getWeatherData(locationQuery) {
     if (data.cod === "404") {
       locationElement.textContent = `City Not Found`;
       tempElement.textContent = `...`;
-      document.getElementById("aqi").textContent = `...`;
-      document.getElementById("today-cond").textContent = `...`;
-      document.getElementById("weather-icon").style.display = "none";
+      aqiElement.textContent = `...`;
+      condElement.textContent = `...`;
+      iconElement.style.display = "none";
       return;
     }
     getAirQuality(data.coord.lat, data.coord.lon);
     locationElement.textContent = data.name;
     tempElement.textContent = `${data.main.temp}°C`;
-    document.getElementById("today-cond").textContent =
-      data.weather[0].description;
-    document.getElementById("weather-icon").src =
-      `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
-    document.getElementById("weather-icon").style.display = "";
+    condElement.textContent = data.weather[0].description;
+    iconElement.src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
+    iconElement.style.display = "";
   } catch (error) {
     locationElement.textContent = "Failed to load Data...";
   }
@@ -49,15 +50,14 @@ async function getAirQuality(lat, lon) {
       return labels[aqi];
     }
     const aqiValue = dataAqi.list[0].main.aqi;
-    document.getElementById("aqi").textContent =
-      `AQI: ${getAqiLabels(aqiValue)}`;
+    aqiElement.textContent = `AQI: ${getAqiLabels(aqiValue)}`;
   } catch (error) {
-    document.getElementById("aqi").textContent = "Issues in loading AQI... ";
+    aqiElement.textContent = "Issues in loading AQI... ";
   }
 }
 let grouped = {};
+const forecastHeading = document.getElementById("forecast-heading");
 async function getWeeklyForecast(locationQuery) {
-  const forecastHeading = document.getElementById("forecast-heading");
   forecastHeading.textContent = `Fetching Forecast...`;
   const container = document.querySelector(".container");
   container.innerHTML = "";
@@ -93,13 +93,13 @@ async function getWeeklyForecast(locationQuery) {
       const icon = weather.icon;
       const condition = weather.description;
       cardsHTML += `
-                     <div class="next-day">
-                       <p>${dayName}</p>
-                       <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="weather-icon">
-                       <p>${temp}°C</p>
-                       <p>${condition}</p>
-                     </div>
-                   `;
+      <div class="next-day">
+      <p>${dayName}</p>
+      <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="weather-icon">
+      <p>${temp}°C</p>
+      <p>${condition}</p>
+      </div>
+      `;
     }
     container.innerHTML = cardsHTML;
     forecastHeading.textContent = `Weekly Forecast`;
@@ -131,13 +131,11 @@ function getLocation() {
     },
   );
 }
+const weekDetailsContainer = document.getElementById("week-details-container");
 document
   .getElementById("week-details-btn")
   .addEventListener("click", (event) => {
     event.preventDefault();
-    const weekDetailsContainer = document.getElementById(
-      "week-details-container",
-    );
     if (weekDetailsContainer.innerHTML !== "") {
       weekDetailsContainer.innerHTML = "";
       return;
@@ -151,21 +149,21 @@ document
         month: "long",
       });
       detailsHTML += `
-                      <h4>${formattedDate}</h4>
-                        `;
+      <h4>${formattedDate}</h4>
+      `;
       for (const item of grouped[date]) {
         const time = item.dt_txt.split(" ")[1].slice(0, 5);
         const temp = item.main.temp.toFixed(0);
         const condition = item.weather[0].description;
         const icon = item.weather[0].icon;
         detailsHTML += `
-                        <div class="hour-row">
-                          <p>${time}</p>
-                          <p>${temp}°C</p>
-                          <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="weather-icon">
-                          <p>${condition}</p>
-                        </div>
-                      `;
+        <div class="hour-row">
+        <p>${time}</p>
+        <p>${temp}°C</p>
+        <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="weather-icon">
+        <p>${condition}</p>
+        </div>
+        `;
       }
     }
     weekDetailsContainer.innerHTML = detailsHTML;
@@ -173,25 +171,26 @@ document
 document.getElementById("search-btn").addEventListener("click", () => {
   handleSearch();
 });
-document.getElementById("search").addEventListener("keydown", (event) => {
+const searchElement = document.getElementById("search");
+searchElement.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     event.preventDefault();
     handleSearch();
   }
 });
 function handleSearch() {
-  const cityName = document.getElementById("search").value.trim();
+  const cityName = searchElement.value.trim();
   if (!cityName) {
     locationElement.textContent = `Please Enter the City Name`;
     tempElement.textContent = `...`;
-    document.getElementById("aqi").textContent = `...`;
-    document.getElementById("today-cond").textContent = `...`;
-    document.getElementById("weather-icon").style.display = "none";
-    document.getElementById("forecast-heading").textContent = `...`;
+    aqiElement.textContent = `...`;
+    condElement.textContent = `...`;
+    iconElement.style.display = "none";
+    forecastHeading.textContent = `...`;
     document.querySelector(".container").innerHTML = "";
     return;
   }
-  document.getElementById("week-details-container").innerHTML = "";
+  weekDetailsContainer.innerHTML = "";
   getWeatherData(`q=${cityName}`);
   getWeeklyForecast(`q=${cityName}`);
   const normalisedCity = cityName.toLowerCase();
@@ -233,16 +232,15 @@ function renderSearchHistory() {
     const li = document.createElement("li");
     li.textContent = city;
     li.addEventListener("click", () => {
-      document.getElementById("search").value = city;
+      searchElement.value = city;
       ul.style.display = "none";
       handleSearch();
     });
     ul.appendChild(li);
   }
 }
-const searchInput = document.getElementById("search");
 const ul = document.getElementById("search-history");
-searchInput.addEventListener("click", (event) => {
+searchElement.addEventListener("click", (event) => {
   const searchHistory = JSON.parse(localStorage.getItem("searchHistory")) || [];
   if (searchHistory.length > 0) {
     ul.style.display = "block";
