@@ -1,0 +1,342 @@
+const weatherApi = "6293bcf1e16f4a9aff35282648cbef09";
+const locationElement = document.getElementById("location");
+const tempElement = document.getElementById("today-temp");
+async function getWeatherData(locationQuery) {
+  locationElement.textContent = `Fetching Weather...`;
+  tempElement.textContent = `---`;
+  document.getElementById("today-cond").textContent = `Loading...`;
+  document.getElementById("aqi").textContent = `Loading AQI...`;
+  document.getElementById("weather-icon").style.display = "none";
+  try {
+    const weatherData = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?${locationQuery}&appid=${weatherApi}&units=metric`,
+    );
+    const data = await weatherData.json();
+    if (data.cod === "404") {
+      locationElement.textContent = `City Not Found`;
+      tempElement.textContent = `...`;
+      document.getElementById("aqi").textContent = `...`;
+      document.getElementById("today-cond").textContent = `...`;
+      document.getElementById("weather-icon").style.display = "none";
+      return;
+    }
+    getAirQuality(data.coord.lat, data.coord.lon);
+    locationElement.textContent = data.name;
+    tempElement.textContent = `${data.main.temp}°C`;
+    document.getElementById("today-cond").textContent =
+      data.weather[0].description;
+    document.getElementById("weather-icon").src =
+      `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
+    document.getElementById("weather-icon").style.display = "";
+  } catch (error) {
+    locationElement.textContent = "Failed to load Data...";
+  }
+}
+async function getAirQuality(lat, lon) {
+  try {
+    const airQuality = await fetch(
+      `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${weatherApi}`,
+    );
+    const dataAqi = await airQuality.json();
+    function getAqiLabels(aqi) {
+      const labels = {
+        1: "Good",
+        2: "Fair",
+        3: "Moderate",
+        4: "Poor",
+        5: "Very Poor",
+      };
+      return labels[aqi];
+    }
+    const aqiValue = dataAqi.list[0].main.aqi;
+    document.getElementById("aqi").textContent =
+      `AQI: ${getAqiLabels(aqiValue)}`;
+  } catch (error) {
+    document.getElementById("aqi").textContent = "Issues in loading AQI... ";
+  }
+}
+let grouped = {};
+async function getWeeklyForecast(locationQuery) {
+  const forecastHeading = document.getElementById("forecast-heading");
+  forecastHeading.textContent = `Fetching Forecast...`;
+  const container = document.querySelector(".container");
+  container.innerHTML = "";
+  try {
+    const weeklyData = await fetch(
+      `https://api.openweathermap.org/data/2.5/forecast?${locationQuery}&appid=${weatherApi}&units=metric`,
+    );
+    const weeklyForecast = await weeklyData.json();
+    if (weeklyForecast.cod === "404") {
+      forecastHeading.textContent = "City Not Found";
+      container.innerHTML = "No Forecast Data Available";
+      return;
+    }
+    const dailyForecast = weeklyForecast.list.filter((item) => {
+      return item.dt_txt.includes("12:00:00");
+    });
+    const days = {
+      0: "Sun",
+      1: "Mon",
+      2: "Tue",
+      3: "Wed",
+      4: "Thu",
+      5: "Fri",
+      6: "Sat",
+    };
+    let cardsHTML = "";
+    for (const item of dailyForecast) {
+      const date = item.dt_txt.split(" ")[0];
+      const forecastDate = new Date(date);
+      const dayName = days[forecastDate.getDay()];
+      const temp = item.main.temp.toFixed(0);
+      const weather = item.weather[0];
+      const icon = weather.icon;
+      const condition = weather.description;
+      cardsHTML += `
+                     <div class="next-day">
+                       <p>${dayName}</p>
+                       <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="weather-icon">
+                       <p>${temp}°C</p>
+                       <p>${condition}</p>
+                     </div>
+                   `;
+    }
+    container.innerHTML = cardsHTML;
+    forecastHeading.textContent = `Weekly Forecast`;
+
+    grouped = {};
+    for (const item of weeklyForecast.list) {
+      const date = item.dt_txt.split(" ")[0];
+      if (!grouped[date]) {
+        grouped[date] = [];
+      }
+      grouped[date].push(item);
+    }
+  } catch (error) {
+    container.innerHTML = `Failed to load Weekly Predictions... `;
+    forecastHeading.textContent = "Forecast Unavailable";
+  }
+}
+function getLocation() {
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const longitude = position.coords.longitude;
+      const latitude = position.coords.latitude;
+      getWeatherData(`lat=${latitude}&lon=${longitude}`);
+      getWeeklyForecast(`lat=${latitude}&lon=${longitude}`);
+    },
+    (error) => {
+      locationElement.textContent =
+        "Location access denied. Please search for your city above.";
+    },
+  );
+}
+document
+  .getElementById("week-details-btn")
+  .addEventListener("click", (event) => {
+    event.preventDefault();
+    const weekDetailsContainer = document.getElementById(
+      "week-details-container",
+    );
+    if (weekDetailsContainer.innerHTML !== "") {
+      weekDetailsContainer.innerHTML = "";
+      return;
+    }
+    let detailsHTML = "";
+    for (const date of Object.keys(grouped)) {
+      const forecastDate = new Date(date);
+      const formattedDate = forecastDate.toLocaleDateString("en-IN", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      });
+      detailsHTML += `
+                      <h4>${formattedDate}</h4>
+                        `;
+      for (const item of grouped[date]) {
+        const time = item.dt_txt.split(" ")[1].slice(0, 5);
+        const temp = item.main.temp.toFixed(0);
+        const condition = item.weather[0].description;
+        const icon = item.weather[0].icon;
+        detailsHTML += `
+                        <div class="hour-row">
+                          <p>${time}</p>
+                          <p>${temp}°C</p>
+                          <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="weather-icon">
+                          <p>${condition}</p>
+                        </div>
+                      `;
+      }
+    }
+    weekDetailsContainer.innerHTML = detailsHTML;
+  });
+document.getElementById("search-btn").addEventListener("click", () => {
+  handleSearch();
+});
+document.getElementById("search").addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    handleSearch();
+  }
+});
+function handleSearch() {
+  const cityName = document.getElementById("search").value.trim();
+  if (!cityName) {
+    locationElement.textContent = `Please Enter the City Name`;
+    tempElement.textContent = `...`;
+    document.getElementById("aqi").textContent = `...`;
+    document.getElementById("today-cond").textContent = `...`;
+    document.getElementById("weather-icon").style.display = "none";
+    document.getElementById("forecast-heading").textContent = `...`;
+    document.querySelector(".container").innerHTML = "";
+    return;
+  }
+  document.getElementById("week-details-container").innerHTML = "";
+  getWeatherData(`q=${cityName}`);
+  getWeeklyForecast(`q=${cityName}`);
+  const normalisedCity = cityName.toLowerCase();
+  const searchHistory = JSON.parse(localStorage.getItem("searchHistory")) || [];
+  const cityExists = searchHistory.some(
+    (city) => city.toLowerCase() === normalisedCity,
+  );
+  if (!cityExists) {
+    searchHistory.push(cityName);
+  }
+  localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
+  renderSearchHistory();
+}
+const body = document.body;
+const themeIcon = document.getElementById("theme-icon");
+const savedTheme = localStorage.getItem("theme");
+if (savedTheme === "dark") {
+  body.classList.add("dark");
+  themeIcon.classList.remove("fa-moon");
+  themeIcon.classList.add("fa-sun");
+}
+document.getElementById("dark-mode").addEventListener("click", () => {
+  body.classList.toggle("dark");
+  if (body.classList.contains("dark")) {
+    themeIcon.classList.remove("fa-moon");
+    themeIcon.classList.add("fa-sun");
+    localStorage.setItem("theme", "dark");
+  } else {
+    themeIcon.classList.remove("fa-sun");
+    themeIcon.classList.add("fa-moon");
+    localStorage.setItem("theme", "light");
+  }
+});
+function renderSearchHistory() {
+  const searchHistory = JSON.parse(localStorage.getItem("searchHistory")) || [];
+  const ul = document.getElementById("search-history");
+  ul.innerHTML = "";
+  for (const city of searchHistory) {
+    const li = document.createElement("li");
+    li.textContent = city;
+    li.addEventListener("click", () => {
+      document.getElementById("search").value = city;
+      ul.style.display = "none";
+      handleSearch();
+    });
+    ul.appendChild(li);
+  }
+}
+const searchInput = document.getElementById("search");
+const ul = document.getElementById("search-history");
+searchInput.addEventListener("click", (event) => {
+  const searchHistory = JSON.parse(localStorage.getItem("searchHistory")) || [];
+  if (searchHistory.length > 0) {
+    ul.style.display = "block";
+  }
+});
+const searchWrapper = document.querySelector(".search-wrapper");
+document.addEventListener("click", (event) => {
+  if (!searchWrapper.contains(event.target)) {
+    ul.style.display = "none";
+  }
+});
+const menuBtn = document.getElementById("menu-btn");
+const nav = document.querySelector("nav");
+const overlay = document.getElementById("overlay");
+menuBtn.addEventListener("click", () => {
+  nav.classList.toggle("nav-open");
+  if (nav.classList.contains("nav-open")) {
+    overlay.classList.add("overlay-open");
+  } else {
+    overlay.classList.remove("overlay-open");
+  }
+});
+overlay.addEventListener("click", () => {
+  nav.classList.remove("nav-open");
+  overlay.classList.remove("overlay-open");
+});
+let newsData = [];
+const newsContainer = document.getElementById("news-container");
+function renderNews(articles) {
+  let newsHTML = "";
+  for (const article of articles) {
+    const newsDescription = article.description || `No Description Available`;
+    const newsImage = article.image;
+    const newsTitle = article.title;
+    if (!newsImage) {
+      continue;
+    }
+    newsHTML += ` 
+                  <div class="news-card">
+                    <img src="${newsImage}" alt="">
+                    <h3>${newsTitle}</h3>
+                    <p class="news-description">${newsDescription}</p>
+                    <a href="${article.url}" target="_blank">
+                      Read More
+                    </a>
+                  </div>`;
+  }
+  newsContainer.innerHTML = newsHTML;
+}
+const climateApi = "5066e23f5c821a9c84ed54bbfccdb7f1";
+async function fetchNews() {
+  try {
+    const news = await fetch(
+      `https://gnews.io/api/v4/search?q=climate&apikey=${climateApi}`,
+    );
+    if (!news.ok) {
+      throw new Error("Failed to Fetch...");
+    }
+    const newsDetails = await news.json();
+    newsData = newsDetails.articles;
+    renderNews(newsData);
+  } catch (error) {
+    console.error(error);
+    newsContainer.innerHTML = `<p>Unable to Load Climate News.</p>`;
+  }
+}
+const newsBtn = document.getElementById("news-btn");
+newsBtn.addEventListener("click", (event) => {
+  event.preventDefault();
+  if (newsContainer.innerHTML !== "") {
+    newsContainer.innerHTML = "";
+    return;
+  }
+  if (newsData.length === 0) {
+    fetchNews();
+  } else {
+    renderNews(newsData);
+  }
+});
+function init() {
+  const now = new Date();
+  document.getElementById("today-day").textContent = now.toLocaleDateString(
+    "en-IN",
+    { weekday: "long" },
+  );
+  document.getElementById("today-date").textContent = now.toLocaleDateString(
+    "en-IN",
+    {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    },
+  );
+  getLocation();
+  renderSearchHistory();
+}
+init();

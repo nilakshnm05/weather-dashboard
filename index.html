@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weather Application</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <form>
+      <div class="search-wrapper">
+        <input
+          type="text"
+          id="search"
+          autocomplete="off"
+          placeholder="Search Your Location"
+        />
+        <ul id="search-history"></ul>
+      </div>
+      <button id="search-btn" type="button" aria-label="Search Location">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+    </form>
+    <header>
+      <button id="menu-btn">☰</button>
+      <div class="location-temp-cond">
+        <h1 id="location">Location Name</h1>
+        <p id="today-temp">temperature</p>
+        <p id="today-cond">condition</p>
+        <img src="" alt="weather condition" id="weather-icon" />
+      </div>
+      <div class="day-date-aqi">
+        <button id="dark-mode" aria-label="Theme">
+          <i id="theme-icon" class="fa-solid fa-moon"></i>
+        </button>
+        <h3 id="today-day">Present Day</h3>
+        <p id="today-date">today's date</p>
+        <p id="aqi">AQI status</p>
+      </div>
+    </header>
+    <section class="weekly-forecast">
+      <h2 id="forecast-heading">Weekly Forecast</h2>
+      <div class="container"></div>
+      <div id="week-details-container"></div>
+      <div id="news-container"></div>
+    </section>
+    <nav>
+      <a href="#" id="week-details-btn">Week Details</a>
+      <a href="#" id="news-btn">Climate News</a>
+      <a href="#">Important Current Events</a>
+    </nav>
+    <div id="overlay"></div>
+    <script src="script.js"></script>
+  </body>
+</html>
