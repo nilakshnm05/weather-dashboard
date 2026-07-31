@@ -31,3 +31,16 @@ Learned:
 
 Commit:
 refactor: cache frequently accessed DOM elements
+
+
+
+## Day 3
+
+**Theme:** Avoid Magic Strings
+
+- Learned why hardcoded strings reduce code readability.
+- Replaced repeated values with named constants.
+- Used `UPPER_SNAKE_CASE` for configuration constants.
+- Applied constants for API status codes, forecast time, and localStorage keys.
+- Performed a code review and fixed remaining inconsistencies.
+- **Commit:** `refactor: replace magic strings with named constants`
