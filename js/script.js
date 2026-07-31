@@ -1,3 +1,5 @@
+const CITY_NOT_FOUND = "404";
+const FORECAST_TIME = "12:00:00";
 const weatherApi = "6293bcf1e16f4a9aff35282648cbef09";
 const locationElement = document.getElementById("location");
 const tempElement = document.getElementById("today-temp");
@@ -15,7 +17,7 @@ async function getWeatherData(locationQuery) {
       `https://api.openweathermap.org/data/2.5/weather?${locationQuery}&appid=${weatherApi}&units=metric`,
     );
     const data = await weatherData.json();
-    if (data.cod === "404") {
+    if (data.cod === CITY_NOT_FOUND) {
       locationElement.textContent = `City Not Found`;
       tempElement.textContent = `...`;
       aqiElement.textContent = `...`;
@@ -66,13 +68,13 @@ async function getWeeklyForecast(locationQuery) {
       `https://api.openweathermap.org/data/2.5/forecast?${locationQuery}&appid=${weatherApi}&units=metric`,
     );
     const weeklyForecast = await weeklyData.json();
-    if (weeklyForecast.cod === "404") {
+    if (weeklyForecast.cod === CITY_NOT_FOUND) {
       forecastHeading.textContent = "City Not Found";
       container.innerHTML = "No Forecast Data Available";
       return;
     }
     const dailyForecast = weeklyForecast.list.filter((item) => {
-      return item.dt_txt.includes("12:00:00");
+      return item.dt_txt.includes(FORECAST_TIME);
     });
     const days = {
       0: "Sun",
@@ -178,6 +180,7 @@ searchElement.addEventListener("keydown", (event) => {
     handleSearch();
   }
 });
+const SEARCH_HISTORY_KEY = "searchHistory";
 function handleSearch() {
   const cityName = searchElement.value.trim();
   if (!cityName) {
@@ -194,19 +197,21 @@ function handleSearch() {
   getWeatherData(`q=${cityName}`);
   getWeeklyForecast(`q=${cityName}`);
   const normalisedCity = cityName.toLowerCase();
-  const searchHistory = JSON.parse(localStorage.getItem("searchHistory")) || [];
+  const searchHistory =
+    JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY)) || [];
   const cityExists = searchHistory.some(
     (city) => city.toLowerCase() === normalisedCity,
   );
   if (!cityExists) {
     searchHistory.push(cityName);
   }
-  localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
+  localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(searchHistory));
   renderSearchHistory();
 }
 const body = document.body;
 const themeIcon = document.getElementById("theme-icon");
-const savedTheme = localStorage.getItem("theme");
+const THEME_KEY = "theme";
+const savedTheme = localStorage.getItem(THEME_KEY);
 if (savedTheme === "dark") {
   body.classList.add("dark");
   themeIcon.classList.remove("fa-moon");
@@ -217,15 +222,16 @@ document.getElementById("dark-mode").addEventListener("click", () => {
   if (body.classList.contains("dark")) {
     themeIcon.classList.remove("fa-moon");
     themeIcon.classList.add("fa-sun");
-    localStorage.setItem("theme", "dark");
+    localStorage.setItem(THEME_KEY, "dark");
   } else {
     themeIcon.classList.remove("fa-sun");
     themeIcon.classList.add("fa-moon");
-    localStorage.setItem("theme", "light");
+    localStorage.setItem(THEME_KEY, "light");
   }
 });
 function renderSearchHistory() {
-  const searchHistory = JSON.parse(localStorage.getItem("searchHistory")) || [];
+  const searchHistory =
+    JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY)) || [];
   const ul = document.getElementById("search-history");
   ul.innerHTML = "";
   for (const city of searchHistory) {
@@ -241,7 +247,8 @@ function renderSearchHistory() {
 }
 const ul = document.getElementById("search-history");
 searchElement.addEventListener("click", (event) => {
-  const searchHistory = JSON.parse(localStorage.getItem("searchHistory")) || [];
+  const searchHistory =
+    JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY)) || [];
   if (searchHistory.length > 0) {
     ul.style.display = "block";
   }
