@@ -44,3 +44,12 @@ refactor: cache frequently accessed DOM elements
 - Applied constants for API status codes, forecast time, and localStorage keys.
 - Performed a code review and fixed remaining inconsistencies.
 - **Commit:** `refactor: replace magic strings with named constants`
+
+## Day 4
+
+**Theme:** Single Responsibility Principle
+
+- Learned why small functions are easier to understand and maintain.
+- Extracted search history logic from `handleSearch()`.
+- Reduced the responsibilities of a large function.
+- **Commit:** `refactor: extract search history logic into dedicated function`

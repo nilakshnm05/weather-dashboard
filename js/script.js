@@ -181,6 +181,18 @@ searchElement.addEventListener("keydown", (event) => {
   }
 });
 const SEARCH_HISTORY_KEY = "searchHistory";
+function saveSearchHistory(cityName) {
+  const normalisedCity = cityName.toLowerCase();
+  const searchHistory =
+    JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY)) || [];
+  const cityExists = searchHistory.some(
+    (city) => city.toLowerCase() === normalisedCity,
+  );
+  if (!cityExists) {
+    searchHistory.push(cityName);
+  }
+  localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(searchHistory));
+}
 function handleSearch() {
   const cityName = searchElement.value.trim();
   if (!cityName) {
@@ -196,16 +208,7 @@ function handleSearch() {
   weekDetailsContainer.innerHTML = "";
   getWeatherData(`q=${cityName}`);
   getWeeklyForecast(`q=${cityName}`);
-  const normalisedCity = cityName.toLowerCase();
-  const searchHistory =
-    JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY)) || [];
-  const cityExists = searchHistory.some(
-    (city) => city.toLowerCase() === normalisedCity,
-  );
-  if (!cityExists) {
-    searchHistory.push(cityName);
-  }
-  localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(searchHistory));
+  saveSearchHistory(cityName);
   renderSearchHistory();
 }
 const body = document.body;
