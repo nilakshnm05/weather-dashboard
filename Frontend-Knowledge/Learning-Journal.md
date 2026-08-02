@@ -53,3 +53,13 @@ refactor: cache frequently accessed DOM elements
 - Extracted search history logic from `handleSearch()`.
 - Reduced the responsibilities of a large function.
 - **Commit:** `refactor: extract search history logic into dedicated function`
+
+## Day 5
+
+**Theme:** Configuration & API Security
+
+- Learned the difference between configuration and security.
+- Understood why frontend API keys cannot be truly hidden.
+- Documented current limitations in the README.
+- Added a roadmap for future engineering improvements.
+- **Commit:** `docs: improve project documentation and security notes`
