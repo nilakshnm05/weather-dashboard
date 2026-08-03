@@ -63,3 +63,13 @@ refactor: cache frequently accessed DOM elements
 - Documented current limitations in the README.
 - Added a roadmap for future engineering improvements.
 - **Commit:** `docs: improve project documentation and security notes`
+
+
+## Day 6
+
+**Theme:** DRY Principle
+
+- Learned to avoid repeating UI update logic.
+- Extracted reusable functions for loading and city-not-found states.
+- Improved readability by replacing repeated statements with descriptive function calls.
+- **Commit:** `refactor: extract reusable weather UI state functions`

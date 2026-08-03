@@ -6,23 +6,29 @@ const tempElement = document.getElementById("today-temp");
 const condElement = document.getElementById("today-cond");
 const aqiElement = document.getElementById("aqi");
 const iconElement = document.getElementById("weather-icon");
-async function getWeatherData(locationQuery) {
+function showLoadingState() {
   locationElement.textContent = `Fetching Weather...`;
   tempElement.textContent = `---`;
   condElement.textContent = `Loading...`;
   aqiElement.textContent = `Loading AQI...`;
   iconElement.style.display = "none";
+}
+function showCityNotFoundState() {
+  locationElement.textContent = `City Not Found`;
+  tempElement.textContent = `...`;
+  aqiElement.textContent = `...`;
+  condElement.textContent = `...`;
+  iconElement.style.display = "none";
+}
+async function getWeatherData(locationQuery) {
+  showLoadingState();
   try {
     const weatherData = await fetch(
       `https://api.openweathermap.org/data/2.5/weather?${locationQuery}&appid=${weatherApi}&units=metric`,
     );
     const data = await weatherData.json();
     if (data.cod === CITY_NOT_FOUND) {
-      locationElement.textContent = `City Not Found`;
-      tempElement.textContent = `...`;
-      aqiElement.textContent = `...`;
-      condElement.textContent = `...`;
-      iconElement.style.display = "none";
+      showCityNotFoundState();
       return;
     }
     getAirQuality(data.coord.lat, data.coord.lon);
