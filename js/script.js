@@ -20,6 +20,9 @@ function showCityNotFoundState() {
   condElement.textContent = `...`;
   iconElement.style.display = "none";
 }
+function updateElementText(element, message) {
+  element.textContent = `${message}`;
+}
 async function getWeatherData(locationQuery) {
   showLoadingState();
   try {
@@ -38,7 +41,8 @@ async function getWeatherData(locationQuery) {
     iconElement.src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
     iconElement.style.display = "";
   } catch (error) {
-    locationElement.textContent = "Failed to load Data...";
+    updateElementText(locationElement, "Failed to load Data...");
+    console.error(error);
   }
 }
 async function getAirQuality(lat, lon) {
@@ -60,13 +64,14 @@ async function getAirQuality(lat, lon) {
     const aqiValue = dataAqi.list[0].main.aqi;
     aqiElement.textContent = `AQI: ${getAqiLabels(aqiValue)}`;
   } catch (error) {
-    aqiElement.textContent = "Issues in loading AQI... ";
+    console.error(error);
+    updateElementText(aqiElement, "Issues in loading AQI... ");
   }
 }
 let grouped = {};
 const forecastHeading = document.getElementById("forecast-heading");
 async function getWeeklyForecast(locationQuery) {
-  forecastHeading.textContent = `Fetching Forecast...`;
+  updateElementText(forecastHeading, "Fetching Weekly Forecast...");
   const container = document.querySelector(".container");
   container.innerHTML = "";
   try {
@@ -75,7 +80,7 @@ async function getWeeklyForecast(locationQuery) {
     );
     const weeklyForecast = await weeklyData.json();
     if (weeklyForecast.cod === CITY_NOT_FOUND) {
-      forecastHeading.textContent = "City Not Found";
+      updateElementText(forecastHeading, "City Not Found");
       container.innerHTML = "No Forecast Data Available";
       return;
     }
@@ -110,7 +115,7 @@ async function getWeeklyForecast(locationQuery) {
       `;
     }
     container.innerHTML = cardsHTML;
-    forecastHeading.textContent = `Weekly Forecast`;
+    updateElementText(forecastHeading, "Weekly Forecast");
 
     grouped = {};
     for (const item of weeklyForecast.list) {
@@ -121,8 +126,9 @@ async function getWeeklyForecast(locationQuery) {
       grouped[date].push(item);
     }
   } catch (error) {
+    console.error(error);
     container.innerHTML = `Failed to load Weekly Predictions... `;
-    forecastHeading.textContent = "Forecast Unavailable";
+    updateElementText(forecastHeading, "Failed to load Weekly Predictions... ");
   }
 }
 function getLocation() {
@@ -134,8 +140,11 @@ function getLocation() {
       getWeeklyForecast(`lat=${latitude}&lon=${longitude}`);
     },
     (error) => {
-      locationElement.textContent =
-        "Location access denied. Please search for your city above.";
+      console.error(error);
+      updateElementText(
+        locationElement,
+        "Location access denied. Please search for your city above.",
+      );
     },
   );
 }
@@ -202,7 +211,7 @@ function saveSearchHistory(cityName) {
 function handleSearch() {
   const cityName = searchElement.value.trim();
   if (!cityName) {
-    locationElement.textContent = `Please Enter the City Name`;
+    locationElement.textContent = `Please enter a city name`;
     tempElement.textContent = `...`;
     aqiElement.textContent = `...`;
     condElement.textContent = `...`;
@@ -320,7 +329,7 @@ async function fetchNews() {
     renderNews(newsData);
   } catch (error) {
     console.error(error);
-    newsContainer.innerHTML = `<p>Unable to Load Climate News.</p>`;
+    newsContainer.innerHTML = `<p>Failed to load news...</p>`;
   }
 }
 const newsBtn = document.getElementById("news-btn");

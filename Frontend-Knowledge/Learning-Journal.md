@@ -73,3 +73,14 @@ refactor: cache frequently accessed DOM elements
 - Extracted reusable functions for loading and city-not-found states.
 - Improved readability by replacing repeated statements with descriptive function calls.
 - **Commit:** `refactor: extract reusable weather UI state functions`
+
+
+## Day 7
+
+**Theme:** Error Handling
+
+- Learned defensive programming principles.
+- Improved consistency in error handling.
+- Added developer-friendly error logging.
+- Centralized repeated error UI where appropriate.
+- **Commit:** `refactor: improve error handling and debugging`
