@@ -84,3 +84,13 @@ refactor: cache frequently accessed DOM elements
 - Added developer-friendly error logging.
 - Centralized repeated error UI where appropriate.
 - **Commit:** `refactor: improve error handling and debugging`
+
+
+## Day 8
+
+**Theme:** UI State Management
+
+- Learned to think in terms of application states instead of individual DOM updates.
+- Extracted the empty search UI into its own state function.
+- Improved readability by giving another UI state a descriptive name.
+- **Commit:** `refactor: extract empty search UI state`

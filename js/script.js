@@ -208,16 +208,21 @@ function saveSearchHistory(cityName) {
   }
   localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(searchHistory));
 }
+const forecastContainer = document.querySelector(".container");
+function showEmptySearchState() {
+  locationElement.textContent = `Please enter a city name`;
+  tempElement.textContent = `...`;
+  aqiElement.textContent = `...`;
+  condElement.textContent = `...`;
+  iconElement.style.display = "none";
+  forecastHeading.textContent = `...`;
+  forecastContainer.innerHTML = "";
+}
+
 function handleSearch() {
   const cityName = searchElement.value.trim();
   if (!cityName) {
-    locationElement.textContent = `Please enter a city name`;
-    tempElement.textContent = `...`;
-    aqiElement.textContent = `...`;
-    condElement.textContent = `...`;
-    iconElement.style.display = "none";
-    forecastHeading.textContent = `...`;
-    document.querySelector(".container").innerHTML = "";
+    showEmptySearchState();
     return;
   }
   weekDetailsContainer.innerHTML = "";
