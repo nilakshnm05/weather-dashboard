@@ -93,4 +93,15 @@ refactor: cache frequently accessed DOM elements
 - Learned to think in terms of application states instead of individual DOM updates.
 - Extracted the empty search UI into its own state function.
 - Improved readability by giving another UI state a descriptive name.
-- **Commit:** `refactor: extract empty search UI state`
+- **Commit:** `refactor: extract empty search UI state and DOM caching`
+
+
+## Day 9
+
+**Theme:** Project Organization
+
+- Organized the project into logical sections using comments.
+- Improved readability by grouping related functionality together.
+- Cached the forecast container for consistency.
+- Learned the difference between helper functions and business logic.
+- **Commit:** `refactor: organize project structure and improve readability`

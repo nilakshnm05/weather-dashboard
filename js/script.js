@@ -1,11 +1,35 @@
-const CITY_NOT_FOUND = "404";
-const FORECAST_TIME = "12:00:00";
-const weatherApi = "6293bcf1e16f4a9aff35282648cbef09";
+// DOM Elements
+
 const locationElement = document.getElementById("location");
 const tempElement = document.getElementById("today-temp");
 const condElement = document.getElementById("today-cond");
 const aqiElement = document.getElementById("aqi");
 const iconElement = document.getElementById("weather-icon");
+const forecastHeading = document.getElementById("forecast-heading");
+const forecastContainer = document.querySelector(".container");
+const weekDetailsContainer = document.getElementById("week-details-container");
+const ul = document.getElementById("search-history");
+const searchElement = document.getElementById("search");
+const searchWrapper = document.querySelector(".search-wrapper");
+const body = document.body;
+const themeIcon = document.getElementById("theme-icon");
+const menuBtn = document.getElementById("menu-btn");
+const nav = document.querySelector("nav");
+const overlay = document.getElementById("overlay");
+const newsContainer = document.getElementById("news-container");
+const newsBtn = document.getElementById("news-btn");
+
+// Constants
+
+const CITY_NOT_FOUND = "404";
+const FORECAST_TIME = "12:00:00";
+const SEARCH_HISTORY_KEY = "searchHistory";
+const THEME_KEY = "theme";
+const weatherApi = "6293bcf1e16f4a9aff35282648cbef09";
+const climateApi = "5066e23f5c821a9c84ed54bbfccdb7f1";
+
+// Weather UI States for Loading, City Not Found, and Empty Search
+
 function showLoadingState() {
   locationElement.textContent = `Fetching Weather...`;
   tempElement.textContent = `---`;
@@ -13,6 +37,7 @@ function showLoadingState() {
   aqiElement.textContent = `Loading AQI...`;
   iconElement.style.display = "none";
 }
+
 function showCityNotFoundState() {
   locationElement.textContent = `City Not Found`;
   tempElement.textContent = `...`;
@@ -20,9 +45,25 @@ function showCityNotFoundState() {
   condElement.textContent = `...`;
   iconElement.style.display = "none";
 }
+
+function showEmptySearchState() {
+  locationElement.textContent = `Please enter a city name`;
+  tempElement.textContent = `...`;
+  aqiElement.textContent = `...`;
+  condElement.textContent = `...`;
+  iconElement.style.display = "none";
+  forecastHeading.textContent = `...`;
+  forecastContainer.innerHTML = "";
+}
+
+// Helper function to update element text content
+
 function updateElementText(element, message) {
   element.textContent = `${message}`;
 }
+
+// Weather API and Air Quality API calls
+
 async function getWeatherData(locationQuery) {
   showLoadingState();
   try {
@@ -38,6 +79,7 @@ async function getWeatherData(locationQuery) {
     locationElement.textContent = data.name;
     tempElement.textContent = `${data.main.temp}°C`;
     condElement.textContent = data.weather[0].description;
+      
     iconElement.src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
     iconElement.style.display = "";
   } catch (error) {
@@ -45,6 +87,7 @@ async function getWeatherData(locationQuery) {
     console.error(error);
   }
 }
+
 async function getAirQuality(lat, lon) {
   try {
     const airQuality = await fetch(
@@ -68,12 +111,11 @@ async function getAirQuality(lat, lon) {
     updateElementText(aqiElement, "Issues in loading AQI... ");
   }
 }
+
 let grouped = {};
-const forecastHeading = document.getElementById("forecast-heading");
 async function getWeeklyForecast(locationQuery) {
   updateElementText(forecastHeading, "Fetching Weekly Forecast...");
-  const container = document.querySelector(".container");
-  container.innerHTML = "";
+  forecastContainer.innerHTML = "";
   try {
     const weeklyData = await fetch(
       `https://api.openweathermap.org/data/2.5/forecast?${locationQuery}&appid=${weatherApi}&units=metric`,
@@ -81,7 +123,7 @@ async function getWeeklyForecast(locationQuery) {
     const weeklyForecast = await weeklyData.json();
     if (weeklyForecast.cod === CITY_NOT_FOUND) {
       updateElementText(forecastHeading, "City Not Found");
-      container.innerHTML = "No Forecast Data Available";
+      forecastContainer.innerHTML = "No Forecast Data Available";
       return;
     }
     const dailyForecast = weeklyForecast.list.filter((item) => {
@@ -114,7 +156,7 @@ async function getWeeklyForecast(locationQuery) {
       </div>
       `;
     }
-    container.innerHTML = cardsHTML;
+    forecastContainer.innerHTML = cardsHTML;
     updateElementText(forecastHeading, "Weekly Forecast");
 
     grouped = {};
@@ -127,10 +169,13 @@ async function getWeeklyForecast(locationQuery) {
     }
   } catch (error) {
     console.error(error);
-    container.innerHTML = `Failed to load Weekly Predictions... `;
+    forecastContainer.innerHTML = `Failed to load Weekly Predictions... `;
     updateElementText(forecastHeading, "Failed to load Weekly Predictions... ");
   }
 }
+
+// Geolocation
+
 function getLocation() {
   navigator.geolocation.getCurrentPosition(
     (position) => {
@@ -148,7 +193,171 @@ function getLocation() {
     },
   );
 }
-const weekDetailsContainer = document.getElementById("week-details-container");
+
+// Search History Management
+
+function saveSearchHistory(cityName) {
+  const normalisedCity = cityName.toLowerCase();
+  const searchHistory =
+    JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY)) || [];
+  const cityExists = searchHistory.some(
+    (city) => city.toLowerCase() === normalisedCity,
+  );
+  if (!cityExists) {
+    searchHistory.push(cityName);
+  }
+  localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(searchHistory));
+}
+
+function renderSearchHistory() {
+  const searchHistory =
+    JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY)) || [];
+  ul.innerHTML = "";
+  for (const city of searchHistory) {
+    const li = document.createElement("li");
+    li.textContent = city;
+    li.addEventListener("click", () => {
+      searchElement.value = city;
+      ul.style.display = "none";
+      handleSearch();
+    });
+    ul.appendChild(li);
+  }
+}
+
+function handleSearch() {
+  const cityName = searchElement.value.trim();
+  if (!cityName) {
+    showEmptySearchState();
+    return;
+  }
+  weekDetailsContainer.innerHTML = "";
+  getWeatherData(`q=${cityName}`);
+  getWeeklyForecast(`q=${cityName}`);
+  saveSearchHistory(cityName);
+  renderSearchHistory();
+}
+
+document.getElementById("search-btn").addEventListener("click", () => {
+  handleSearch();
+});
+
+searchElement.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    handleSearch();
+  }
+});
+
+
+searchElement.addEventListener("click", (event) => {
+  const searchHistory =
+    JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY)) || [];
+  if (searchHistory.length > 0) {
+    ul.style.display = "block";
+  }
+});
+
+document.addEventListener("click", (event) => {
+  if (!searchWrapper.contains(event.target)) {
+    ul.style.display = "none";
+  }
+});
+
+// Dark Mode Toggle Functionality
+
+const savedTheme = localStorage.getItem(THEME_KEY);
+if (savedTheme === "dark") {
+  body.classList.add("dark");
+  themeIcon.classList.remove("fa-moon");
+  themeIcon.classList.add("fa-sun");
+}
+document.getElementById("dark-mode").addEventListener("click", () => {
+  body.classList.toggle("dark");
+  if (body.classList.contains("dark")) {
+    themeIcon.classList.remove("fa-moon");
+    themeIcon.classList.add("fa-sun");
+    localStorage.setItem(THEME_KEY, "dark");
+  } else {
+    themeIcon.classList.remove("fa-sun");
+    themeIcon.classList.add("fa-moon");
+    localStorage.setItem(THEME_KEY, "light");
+  }
+});
+
+// Responsive Navigation Menu
+
+menuBtn.addEventListener("click", () => {
+  nav.classList.toggle("nav-open");
+  if (nav.classList.contains("nav-open")) {
+    overlay.classList.add("overlay-open");
+  } else {
+    overlay.classList.remove("overlay-open");
+  }
+});
+overlay.addEventListener("click", () => {
+  nav.classList.remove("nav-open");
+  overlay.classList.remove("overlay-open");
+});
+
+// News API Integration
+
+let newsData = [];
+
+async function fetchNews() {
+  try {
+    const news = await fetch(
+      `https://gnews.io/api/v4/search?q=climate&apikey=${climateApi}`,
+    );
+    if (!news.ok) {
+      throw new Error("Failed to Fetch...");
+    }
+    const newsDetails = await news.json();
+    newsData = newsDetails.articles;
+    renderNews(newsData);
+  } catch (error) {
+    console.error(error);
+    newsContainer.innerHTML = `<p>Failed to load news...</p>`;
+  }
+}
+
+function renderNews(articles) {
+  let newsHTML = "";
+  for (const article of articles) {
+    const newsDescription = article.description || `No Description Available`;
+    const newsImage = article.image;
+    const newsTitle = article.title;
+    if (!newsImage) {
+      continue;
+    }
+    newsHTML += ` 
+    <div class="news-card">
+    <img src="${newsImage}" alt="">
+                    <h3>${newsTitle}</h3>
+                    <p class="news-description">${newsDescription}</p>
+                    <a href="${article.url}" target="_blank">
+                    Read More
+                    </a>
+                    </div>`;
+  }
+  newsContainer.innerHTML = newsHTML;
+}
+
+newsBtn.addEventListener("click", (event) => {
+  event.preventDefault();
+  if (newsContainer.innerHTML !== "") {
+    newsContainer.innerHTML = "";
+    return;
+  }
+  if (newsData.length === 0) {
+    fetchNews();
+  } else {
+    renderNews(newsData);
+  }
+});
+
+// Week-Details btn
+
 document
   .getElementById("week-details-btn")
   .addEventListener("click", (event) => {
@@ -185,171 +394,8 @@ document
     }
     weekDetailsContainer.innerHTML = detailsHTML;
   });
-document.getElementById("search-btn").addEventListener("click", () => {
-  handleSearch();
-});
-const searchElement = document.getElementById("search");
-searchElement.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    handleSearch();
-  }
-});
-const SEARCH_HISTORY_KEY = "searchHistory";
-function saveSearchHistory(cityName) {
-  const normalisedCity = cityName.toLowerCase();
-  const searchHistory =
-    JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY)) || [];
-  const cityExists = searchHistory.some(
-    (city) => city.toLowerCase() === normalisedCity,
-  );
-  if (!cityExists) {
-    searchHistory.push(cityName);
-  }
-  localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(searchHistory));
-}
-const forecastContainer = document.querySelector(".container");
-function showEmptySearchState() {
-  locationElement.textContent = `Please enter a city name`;
-  tempElement.textContent = `...`;
-  aqiElement.textContent = `...`;
-  condElement.textContent = `...`;
-  iconElement.style.display = "none";
-  forecastHeading.textContent = `...`;
-  forecastContainer.innerHTML = "";
-}
 
-function handleSearch() {
-  const cityName = searchElement.value.trim();
-  if (!cityName) {
-    showEmptySearchState();
-    return;
-  }
-  weekDetailsContainer.innerHTML = "";
-  getWeatherData(`q=${cityName}`);
-  getWeeklyForecast(`q=${cityName}`);
-  saveSearchHistory(cityName);
-  renderSearchHistory();
-}
-const body = document.body;
-const themeIcon = document.getElementById("theme-icon");
-const THEME_KEY = "theme";
-const savedTheme = localStorage.getItem(THEME_KEY);
-if (savedTheme === "dark") {
-  body.classList.add("dark");
-  themeIcon.classList.remove("fa-moon");
-  themeIcon.classList.add("fa-sun");
-}
-document.getElementById("dark-mode").addEventListener("click", () => {
-  body.classList.toggle("dark");
-  if (body.classList.contains("dark")) {
-    themeIcon.classList.remove("fa-moon");
-    themeIcon.classList.add("fa-sun");
-    localStorage.setItem(THEME_KEY, "dark");
-  } else {
-    themeIcon.classList.remove("fa-sun");
-    themeIcon.classList.add("fa-moon");
-    localStorage.setItem(THEME_KEY, "light");
-  }
-});
-function renderSearchHistory() {
-  const searchHistory =
-    JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY)) || [];
-  const ul = document.getElementById("search-history");
-  ul.innerHTML = "";
-  for (const city of searchHistory) {
-    const li = document.createElement("li");
-    li.textContent = city;
-    li.addEventListener("click", () => {
-      searchElement.value = city;
-      ul.style.display = "none";
-      handleSearch();
-    });
-    ul.appendChild(li);
-  }
-}
-const ul = document.getElementById("search-history");
-searchElement.addEventListener("click", (event) => {
-  const searchHistory =
-    JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY)) || [];
-  if (searchHistory.length > 0) {
-    ul.style.display = "block";
-  }
-});
-const searchWrapper = document.querySelector(".search-wrapper");
-document.addEventListener("click", (event) => {
-  if (!searchWrapper.contains(event.target)) {
-    ul.style.display = "none";
-  }
-});
-const menuBtn = document.getElementById("menu-btn");
-const nav = document.querySelector("nav");
-const overlay = document.getElementById("overlay");
-menuBtn.addEventListener("click", () => {
-  nav.classList.toggle("nav-open");
-  if (nav.classList.contains("nav-open")) {
-    overlay.classList.add("overlay-open");
-  } else {
-    overlay.classList.remove("overlay-open");
-  }
-});
-overlay.addEventListener("click", () => {
-  nav.classList.remove("nav-open");
-  overlay.classList.remove("overlay-open");
-});
-let newsData = [];
-const newsContainer = document.getElementById("news-container");
-function renderNews(articles) {
-  let newsHTML = "";
-  for (const article of articles) {
-    const newsDescription = article.description || `No Description Available`;
-    const newsImage = article.image;
-    const newsTitle = article.title;
-    if (!newsImage) {
-      continue;
-    }
-    newsHTML += ` 
-                  <div class="news-card">
-                    <img src="${newsImage}" alt="">
-                    <h3>${newsTitle}</h3>
-                    <p class="news-description">${newsDescription}</p>
-                    <a href="${article.url}" target="_blank">
-                      Read More
-                    </a>
-                  </div>`;
-  }
-  newsContainer.innerHTML = newsHTML;
-}
-const climateApi = "5066e23f5c821a9c84ed54bbfccdb7f1";
-async function fetchNews() {
-  try {
-    const news = await fetch(
-      `https://gnews.io/api/v4/search?q=climate&apikey=${climateApi}`,
-    );
-    if (!news.ok) {
-      throw new Error("Failed to Fetch...");
-    }
-    const newsDetails = await news.json();
-    newsData = newsDetails.articles;
-    renderNews(newsData);
-  } catch (error) {
-    console.error(error);
-    newsContainer.innerHTML = `<p>Failed to load news...</p>`;
-  }
-}
-const newsBtn = document.getElementById("news-btn");
-newsBtn.addEventListener("click", (event) => {
-  event.preventDefault();
-  if (newsContainer.innerHTML !== "") {
-    newsContainer.innerHTML = "";
-    return;
-  }
-  if (newsData.length === 0) {
-    fetchNews();
-  } else {
-    renderNews(newsData);
-  }
-});
+// Initialization
 function init() {
   const now = new Date();
   document.getElementById("today-day").textContent = now.toLocaleDateString(
