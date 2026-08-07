@@ -79,7 +79,7 @@ async function getWeatherData(locationQuery) {
     locationElement.textContent = data.name;
     tempElement.textContent = `${data.main.temp}°C`;
     condElement.textContent = data.weather[0].description;
-      
+
     iconElement.src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
     iconElement.style.display = "";
   } catch (error) {
@@ -197,15 +197,27 @@ function getLocation() {
 // Search History Management
 
 function saveSearchHistory(cityName) {
-  const normalisedCity = cityName.toLowerCase();
   const searchHistory =
     JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY)) || [];
+  const normalisedCity = cityName.toLowerCase();
   const cityExists = searchHistory.some(
     (city) => city.toLowerCase() === normalisedCity,
   );
   if (!cityExists) {
-    searchHistory.push(cityName);
+    searchHistory.unshift(cityName);
+  } else {
+    const cityIndex = searchHistory.findIndex(
+      (city) => city.toLowerCase() === normalisedCity,
+    );
+    if (cityIndex !== -1) {
+      searchHistory.splice(cityIndex, 1);
+      searchHistory.unshift(cityName);
+    }
   }
+  if (searchHistory.length > 5) {
+    searchHistory.pop();
+  }
+
   localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(searchHistory));
 }
 
@@ -248,7 +260,6 @@ searchElement.addEventListener("keydown", (event) => {
     handleSearch();
   }
 });
-
 
 searchElement.addEventListener("click", (event) => {
   const searchHistory =
@@ -396,6 +407,7 @@ document
   });
 
 // Initialization
+
 function init() {
   const now = new Date();
   document.getElementById("today-day").textContent = now.toLocaleDateString(

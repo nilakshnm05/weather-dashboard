@@ -105,3 +105,15 @@ refactor: cache frequently accessed DOM elements
 - Cached the forecast container for consistency.
 - Learned the difference between helper functions and business logic.
 - **Commit:** `refactor: organize project structure and improve readability`
+
+
+## Day 10
+
+**Theme:** Smart Search History
+
+- Redesigned search history to prioritize recent searches.
+- Prevented duplicate entries by moving existing cities to the top.
+- Limited search history to five items for a cleaner user experience.
+- Refactored the logic into a reusable `saveSearchHistory(cityName)` function.
+- Practiced `findIndex()`, `splice()`, `unshift()`, and `pop()` together.
+- **Commit:** `feat: improve recent search history behavior`
