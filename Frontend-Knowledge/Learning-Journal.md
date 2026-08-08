@@ -117,3 +117,15 @@ refactor: cache frequently accessed DOM elements
 - Refactored the logic into a reusable `saveSearchHistory(cityName)` function.
 - Practiced `findIndex()`, `splice()`, `unshift()`, and `pop()` together.
 - **Commit:** `feat: improve recent search history behavior`
+
+
+## Day 11 — Async UI Orchestration
+
+Today I implemented a loading spinner using CSS animation and connected it to the weather-loading lifecycle.
+I learned `@keyframes`, `transform: rotate()` and the `animation` property for the first time.
+I learned that async functions return Promises and studied how `Promise.all()` coordinates multiple async operations.
+I learned that `finally` runs regardless of whether the try block succeeds or exits through an error/return.
+I refactored the weather-loading flow so one `loadWeather()` function orchestrates weather and forecast requests.
+This removed duplicated API orchestration from search and geolocation.
+The biggest lesson was separating individual tasks from the function responsible for coordinating them.
+I also learned that good abstraction should solve genuine duplication rather than add unnecessary complexity.

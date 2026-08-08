@@ -18,6 +18,7 @@ const nav = document.querySelector("nav");
 const overlay = document.getElementById("overlay");
 const newsContainer = document.getElementById("news-container");
 const newsBtn = document.getElementById("news-btn");
+const loadingSpinner = document.getElementById("loading-state");
 
 // Constants
 
@@ -36,6 +37,11 @@ function showLoadingState() {
   condElement.textContent = `Loading...`;
   aqiElement.textContent = `Loading AQI...`;
   iconElement.style.display = "none";
+  loadingSpinner.style.display = "";
+}
+
+function hideLoadingState() {
+  loadingSpinner.style.display = "none";
 }
 
 function showCityNotFoundState() {
@@ -65,7 +71,6 @@ function updateElementText(element, message) {
 // Weather API and Air Quality API calls
 
 async function getWeatherData(locationQuery) {
-  showLoadingState();
   try {
     const weatherData = await fetch(
       `https://api.openweathermap.org/data/2.5/weather?${locationQuery}&appid=${weatherApi}&units=metric`,
@@ -174,6 +179,18 @@ async function getWeeklyForecast(locationQuery) {
   }
 }
 
+async function loadWeather(locationQuery) {
+  showLoadingState();
+  try {
+    await Promise.all([
+      getWeatherData(locationQuery),
+      getWeeklyForecast(locationQuery),
+    ]);
+  } finally {
+    hideLoadingState();
+  }
+}
+
 // Geolocation
 
 function getLocation() {
@@ -181,9 +198,8 @@ function getLocation() {
     (position) => {
       const longitude = position.coords.longitude;
       const latitude = position.coords.latitude;
-      getWeatherData(`lat=${latitude}&lon=${longitude}`);
-      getWeeklyForecast(`lat=${latitude}&lon=${longitude}`);
-    },
+      loadWeather(`lat=${latitude}&lon=${longitude}`);
+      },
     (error) => {
       console.error(error);
       updateElementText(
@@ -237,15 +253,14 @@ function renderSearchHistory() {
   }
 }
 
-function handleSearch() {
+async function handleSearch() {
   const cityName = searchElement.value.trim();
   if (!cityName) {
     showEmptySearchState();
     return;
   }
   weekDetailsContainer.innerHTML = "";
-  getWeatherData(`q=${cityName}`);
-  getWeeklyForecast(`q=${cityName}`);
+  loadWeather(`q=${cityName}`);
   saveSearchHistory(cityName);
   renderSearchHistory();
 }

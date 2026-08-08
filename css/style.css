@@ -247,6 +247,24 @@ h2 {
 .news-card a {
   margin-top: auto;
 }
+
+#loading-state {
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid var(--text-color);
+  border-top-color: transparent;
+  animation: loading-spinner 1s linear infinite;
+}
+@keyframes loading-spinner {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (min-width: 768px) {
   .next-day {
     flex: 1;
